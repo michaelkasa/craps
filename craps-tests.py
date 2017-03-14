@@ -271,6 +271,151 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.winnings, -50)
         self.assertEqual(player.log.winnings_history,[x for x in range(-5,-51,-5)])
 
+    def test_pass_odds_winning_2x(self):
+        player = Player(bets_pass_and_odds, quits_after_ten)
+        board = Board()
+
+        while not player.is_quitting():
+            ''' Roll 1, set the point '''
+            board.reset()
+            self.assertFalse(board.round_is_over)
+            board.take_bets(player.make_bets(board.get_status()))
+            roll = random.choice([4,10])
+            board.roll(roll)
+
+            ''' Roll 2, hit another point (nothing happens) '''
+            self.assertFalse(board.round_is_over)
+            new_bets = player.make_bets(board.get_status())
+            self.assertTrue(new_bets)
+            board.take_bets(new_bets)
+            board.roll(roll)
+            self.assertTrue(board.round_is_over)
+            player.get_payouts(board.return_payouts())
+            
+        self.assertEqual(player.winnings, 150)
+        self.assertEqual(player.log.winnings_history,[x for x in range(15,15*10 + 1,15)])
+
+    def test_pass_odds_winning_6fifths_x(self):
+        player = Player(bets_pass_and_odds, quits_after_ten)
+        board = Board()
+
+        while not player.is_quitting():
+            ''' Roll 1, set the point '''
+            board.reset()
+            self.assertFalse(board.round_is_over)
+            board.take_bets(player.make_bets(board.get_status()))
+            roll = random.choice([6,8])
+            board.roll(roll)
+
+            ''' Roll 2, hit another point (nothing happens) '''
+            self.assertFalse(board.round_is_over)
+            new_bets = player.make_bets(board.get_status())
+            self.assertTrue(new_bets)
+            board.take_bets(new_bets)
+            board.roll(roll)
+            self.assertTrue(board.round_is_over)
+            player.get_payouts(board.return_payouts())
+            
+        self.assertEqual(player.winnings, 50 + 60)
+        self.assertEqual(player.log.winnings_history,[x for x in range(11,11*10 + 1,11)])
+
+    def test_pass_odds_winning_3halves_x(self):
+        player = Player(bets_pass_and_odds, quits_after_ten)
+        board = Board()
+
+        while not player.is_quitting():
+            ''' Roll 1, set the point '''
+            board.reset()
+            self.assertFalse(board.round_is_over)
+            board.take_bets(player.make_bets(board.get_status()))
+            roll = random.choice([5,9])
+            board.roll(roll)
+
+            ''' Roll 2, hit another point (nothing happens) '''
+            self.assertFalse(board.round_is_over)
+            new_bets = player.make_bets(board.get_status())
+            self.assertTrue(new_bets)
+            board.take_bets(new_bets)
+            board.roll(roll)
+            self.assertTrue(board.round_is_over)
+            player.get_payouts(board.return_payouts())
+            
+        self.assertEqual(player.winnings, 50 + 10*9)
+        self.assertEqual(player.log.winnings_history,[x for x in range(14,14*10 + 1,14)])
+
+    def test_quits_after_plusminus50(self):
+        player = Player(bets_pass, quits_after_gain_or_lose_50)
+        board = Board()
+
+        while not player.is_quitting():
+            board.reset()
+            while not board.get_status().round_is_over:
+                board.take_bets(player.make_bets(board.get_status()))
+                r = board.roll()
+            player.get_payouts(board.return_payouts())
+
+        self.assertLess(10,player.log.num_rounds)
+        self.assertLess(player.log.num_rounds, player.log.num_rolls)
+        self.assertEqual(player.log.num_rounds,player.log.num_bets)
+        self.assertEqual(abs(player.log.winnings_history[-1]),50)
+
+    def test_quits_after_plusminus50_house_odds(self):
+        player = Player(bets_pass_and_odds, quits_after_gain_or_lose_50)
+        board = Board()
+
+        while not player.is_quitting():
+            board.reset()
+            while not board.get_status().round_is_over:
+                board.take_bets(player.make_bets(board.get_status()))
+                r = board.roll()
+            player.get_payouts(board.return_payouts())
+
+        self.assertLess(4,player.log.num_rounds)
+        self.assertLess(player.log.num_rounds, player.log.num_rolls)
+        self.assertLessEqual(player.log.num_rounds,player.log.num_bets)
+        self.assertGreaterEqual(abs(player.log.winnings_history[-1]),50)
+
+class TestOverallEdge(unittest.TestCase):
+
+    def test_pass_house_edge(self):
+        player = Player(bets_pass, quits_after_thousand)
+        board = Board()
+
+        while not player.is_quitting():
+            board.reset()
+            while not board.get_status().round_is_over:
+                board.take_bets(player.make_bets(board.get_status()))
+                r = board.roll()
+            player.get_payouts(board.return_payouts())
+
+        '''
+        Expect player to be within 2 std dev of theoretical return
+        Theoretical return: -0.0141 * 5 * 1000 = -70
+        Std dev: 10 * sqrt(N*p*(1-p)) = 160
+        '''
+        self.assertLess(-70 - 320, player.winnings)
+        self.assertGreater(-70 + 320, player.winnings)
+
+    def test_pass_house_edge_100K(self):
+        player = Player(bets_pass, quits_after_100K)
+        board = Board()
+
+        while not player.is_quitting():
+            board.reset()
+            while not board.get_status().round_is_over:
+                board.take_bets(player.make_bets(board.get_status()))
+                r = board.roll()
+            player.get_payouts(board.return_payouts())
+
+        '''
+        Expect player to be within 2 std dev of theoretical return
+        Theoretical return: -0.0141 * 5 * 100000 = -7000
+        Std dev: 10 * sqrt(N*p*(1-p)) = 1600
+        '''
+        self.assertLess(-7000 - 3200, player.winnings)
+        self.assertGreater(-7000 + 3200, player.winnings)
+        
+
 if __name__ == '__main__':
     unittest.main()
     

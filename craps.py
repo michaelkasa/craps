@@ -1,6 +1,10 @@
 import random
 
-''' Define bets and their associated is_valid and get_payout functions here '''
+debug = False
+
+'''-----------------------------------------------------------------------------
+---  Bet definitions below!                                                  ---
+-----------------------------------------------------------------------------'''
 def pass_is_valid(self, bet):
     ''' Only bet pass if we're at the start of a round '''
     return self.point == 0 and not self.round_is_over
@@ -13,9 +17,29 @@ def pass_get_payout(self, bet):
         return 2*bet.amount
     else:
         return 0
+
+def pass_odds_is_valid(self, bet):
+    return not self.round_is_over and self.point_just_set
+def pass_odds_get_payout(self, bet):
+    if not self.round_is_over:
+        raise RuntimeError('''Don't pay out unless round is over!''')
+    if self.point > 0 and self.last_roll == self.point:
+        return bet.amount * (1 + \
+               free_odds[self.point]['num']/free_odds[self.point]['den'])
+    else:
+        return 0
+
+free_odds = {4:{'num':2,'den':1},
+             5:{'num':3,'den':2},
+             6:{'num':6,'den':5},
+             8:{'num':6,'den':5},
+             9:{'num':3,'den':2},
+             10:{'num':2,'den':1}}
     
 bets = {
-    'pass' : {'is_valid': pass_is_valid, 'get_payout': pass_get_payout}
+    'pass' : {'is_valid': pass_is_valid, 'get_payout': pass_get_payout},
+    'pass_odds' : {'is_valid': pass_odds_is_valid,
+                   'get_payout': pass_odds_get_payout}
     }
 
 class Log:
@@ -79,6 +103,9 @@ class Board:
             dice2 = random.randint(1,6)
             self.last_roll = dice1 + dice2
 
+            if debug:
+                print('Rolled ' + str(self.last_roll))
+
         if self.point == 0 and self.last_roll in [4,5,6,8,9,10]:
             self.point = self.last_roll
             self.point_just_set = True
@@ -86,9 +113,13 @@ class Board:
             self.point_just_set = False
 
         ''' Update board status '''
-        if not self.point_just_set:
-            self.round_is_over = self.last_roll in [2, 3, 7, 11, 12, self.point]
-        
+        if self.point == 0:
+            self.round_is_over = self.last_roll in [2, 3, 7, 11, 12]
+        elif not self.point_just_set:
+            self.round_is_over = self.last_roll in [7, self.point]
+
+        if debug:
+            print('   ' + str(self.get_status()))
         return self.last_roll
 
     def take_bets(self, bets):
@@ -98,10 +129,14 @@ class Board:
             self.bets.append(bet)
 
     def return_payouts(self):
+        if debug:
+            print('Returning payouts')
         payouts = []
         for bet in self.bets:
             payouts.append(bets[bet.bet_type]['get_payout'](self, bet))
         self.reset()
+        if debug:
+            print(payouts)
         return payouts
 
     def get_status(self):
@@ -150,12 +185,20 @@ class Player:
         
         new_bets = self.betting_strategy(self, board_status)
 
+        if debug:
+            print('Making bets:::')
+            for bet in new_bets:
+                print('   ' + str(bet))
+
         ''' Increment the num_bets '''
         self.log.num_bets = self.log.num_bets + len(new_bets)
 
         return new_bets
 
     def get_payouts(self, payouts):
+        if debug:
+            print('Getting payouts')
+            print(payouts)
         self.winnings = self.winnings + sum(payouts)
         self.log.winnings_history.append(self.winnings)
 
@@ -165,15 +208,17 @@ class Player:
 def always_quits(self):
     return True
 def quits_after_one(self):
-    if self.log.num_rounds >= 1:
-        return True
-    else:
-        return False
+    return self.log.num_rounds >= 1
 def quits_after_ten(self):
-    if self.log.num_rounds >= 10:
-        return True
-    else:
-        return False
+    return self.log.num_rounds >= 10
+def quits_after_thousand(self):
+    return self.log.num_rounds >= 1000
+def quits_after_100K(self):
+    return self.log.num_rounds >= 100000
+def quits_after_gain_or_lose_50(self):
+    return self.log.winnings_history and \
+           abs(self.log.winnings_history[-1]) >= 50
+    
 
 '''-----------------------------------------------------------------------------
 ---  Betting strategies below!                                               ---
@@ -186,4 +231,19 @@ def bets_pass(self, board_status):
         return [Bet('pass',board_status.min_bet)]
     else:
         return []
+def bets_pass_and_odds(self, board_status):
+    if board_status.point == 0 and not board_status.round_is_over:
+        self.winnings = self.winnings - board_status.min_bet
+        return [Bet('pass',board_status.min_bet)]
+    elif board_status.point_just_set:
+        bet_amount = board_status.min_bet + \
+                     (board_status.min_bet % \
+                      free_odds[board_status.point]['den'])
+        self.winnings = self.winnings - bet_amount
+        return [Bet('pass_odds',bet_amount)]
+    else:
+        return []
+        
+        
+                      
 
