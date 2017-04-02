@@ -29,12 +29,12 @@ def pass_odds_get_payout(self, bet):
     else:
         return 0
 
-free_odds = {4:{'num':2,'den':1},
-             5:{'num':3,'den':2},
-             6:{'num':6,'den':5},
-             8:{'num':6,'den':5},
-             9:{'num':3,'den':2},
-             10:{'num':2,'den':1}}
+free_odds = {4:{'num':2.,'den':1.},
+             5:{'num':3.,'den':2.},
+             6:{'num':6.,'den':5.},
+             8:{'num':6.,'den':5.},
+             9:{'num':3.,'den':2.},
+             10:{'num':2.,'den':1.}}
     
 bets = {
     'pass' : {'is_valid': pass_is_valid, 'get_payout': pass_get_payout},
@@ -216,8 +216,13 @@ def quits_after_thousand(self):
 def quits_after_100K(self):
     return self.log.num_rounds >= 100000
 def quits_after_gain_or_lose_50(self):
-    return self.log.winnings_history and \
+     return self.log.winnings_history and \
            abs(self.log.winnings_history[-1]) >= 50
+def quits_after_gainG_or_lossL_or_roundMax(self):
+    return self.log.winnings_history and \
+           (self.log.winnings_history[-1] <= -abs(self.lossL) or \
+           self.log.winnings_history[-1] >= self.gainG or \
+           self.log.num_rounds >= self.roundMax)
     
 
 '''-----------------------------------------------------------------------------
