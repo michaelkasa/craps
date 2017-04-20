@@ -1,20 +1,18 @@
+''' Craps module tests. '''
+
 import unittest
 import random
-
 from craps import *
 
 class TestBetMethods(unittest.TestCase):
-
-    ''' Test exception raised when bet amount is nonpositive '''
     def test_bet_amount_exceptions(self):
-
+        ''' Test exception raised when bet amount is nonpositive '''
         with self.assertRaises(ValueError):
             Bet('pass',0)
         with self.assertRaises(ValueError):
             Bet('pass',-20)
 
 class TestBoardMethods(unittest.TestCase):
-
     ''' Test roll() in the board '''
     def test_roll(self):
 
@@ -132,7 +130,8 @@ class TestLogging(unittest.TestCase):
 class TestFullScenario(unittest.TestCase):
 
     def test_pass_winning_a_lot(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -144,7 +143,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(5,51,5)])
 
     def test_pass_winning_a_lot_by_points(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -168,7 +168,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(5,51,5)])        
 
     def test_pass_winning_a_lot_by_points_with_empty_rolls(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -202,7 +203,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(5,51,5)])
 
     def test_pass_losing_a_lot(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -214,7 +216,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(-5,-51,-5)])
 
     def test_pass_losing_a_lot_by_points(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -238,7 +241,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(-5,-51,-5)])
 
     def test_pass_losing_a_lot_by_points_with_empty_rolls(self):
-        player = Player(bets_pass, quits_after_ten)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -272,7 +276,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(-5,-51,-5)])
 
     def test_pass_odds_winning_2x(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -296,7 +301,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(15,15*10 + 1,15)])
 
     def test_pass_odds_winning_2x_with_empty_rolls(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -328,7 +334,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(15,15*10 + 1,15)])
 
     def test_pass_odds_winning_6fifths_x(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -352,7 +359,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(11,11*10 + 1,11)])
 
     def test_pass_odds_winning_6fifthsx_with_empty_rolls(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -384,7 +392,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(11,11*10 + 1,11)])
 
     def test_pass_odds_winning_3halves_x(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -408,7 +417,8 @@ class TestFullScenario(unittest.TestCase):
         self.assertEqual(player.log.winnings_history,[x for x in range(14,14*10 + 1,14)])
 
     def test_pass_odds_winning_3halves_x_with_empty_rolls(self):
-        player = Player(bets_pass_and_odds, quits_after_ten)
+        player = Player(bets_pass_and_odds, quits_after_N_rounds)
+        player.N = 10
         board = Board()
 
         while not player.is_quitting():
@@ -503,7 +513,8 @@ class TestFullScenario(unittest.TestCase):
 class TestOverallEdge(unittest.TestCase):
 
     def test_pass_house_edge(self):
-        player = Player(bets_pass, quits_after_thousand)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 1000
         board = Board()
 
         while not player.is_quitting():
@@ -522,7 +533,8 @@ class TestOverallEdge(unittest.TestCase):
         self.assertGreater(-70 + 320, player.winnings)
 
     def test_pass_house_edge_100K(self):
-        player = Player(bets_pass, quits_after_100K)
+        player = Player(bets_pass, quits_after_N_rounds)
+        player.N = 100000
         board = Board()
 
         while not player.is_quitting():
